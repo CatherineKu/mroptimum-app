@@ -1,0 +1,82 @@
+{
+  "tools": [
+    {
+      "name": "list_mro_profiles",
+      "description": "List approved MR Optimum experiment profiles.",
+      "input_schema": {"type": "object", "properties": {}, "additionalProperties": false}
+    },
+    {
+      "name": "list_mro_datasets",
+      "description": "List registered datasets without exposing object-storage locations.",
+      "input_schema": {
+        "type": "object",
+        "properties": {"role": {"type": "string", "enum": ["signal", "noise", "flip_angle"]}},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "inspect_mro_inputs",
+      "description": "Preflight registered inputs for an approved profile. Does not submit a job.",
+      "input_schema": {"$ref": "#/definitions/plan_arguments"}
+    },
+    {
+      "name": "plan_mro_run",
+      "description": "Create a reviewable MR Optimum run plan. Explicit user confirmation is required before submission.",
+      "input_schema": {"$ref": "#/definitions/plan_arguments"}
+    },
+    {
+      "name": "submit_mro_run",
+      "description": "Submit an explicitly confirmed, existing plan through CloudMR Brain.",
+      "input_schema": {
+        "type": "object",
+        "required": ["plan_id"],
+        "properties": {"plan_id": {"type": "string", "minLength": 1}},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_mro_run_status",
+      "description": "Get safe status for a CloudMR pipeline.",
+      "input_schema": {
+        "type": "object",
+        "required": ["pipeline_id"],
+        "properties": {"pipeline_id": {"type": "string", "minLength": 1}},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "diagnose_mro_run",
+      "description": "Return a redacted technical workflow diagnosis for a pipeline.",
+      "input_schema": {
+        "type": "object",
+        "required": ["pipeline_id"],
+        "properties": {"pipeline_id": {"type": "string", "minLength": 1}},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_mro_result_manifest",
+      "description": "Check whether an authorized completed run has outputs without exposing raw result URLs.",
+      "input_schema": {
+        "type": "object",
+        "required": ["pipeline_id"],
+        "properties": {"pipeline_id": {"type": "string", "minLength": 1}},
+        "additionalProperties": false
+      }
+    }
+  ],
+  "definitions": {
+    "plan_arguments": {
+      "type": "object",
+      "required": ["profile_id", "signal_dataset_id"],
+      "properties": {
+        "profile_id": {"type": "string", "enum": ["ac_rss", "ac_rss_fa90", "mr_rss"]},
+        "signal_dataset_id": {"type": "string", "minLength": 1},
+        "noise_dataset_id": {"type": "string", "minLength": 1},
+        "flip_angle_dataset_id": {"type": "string", "minLength": 1},
+        "alias": {"type": "string", "minLength": 1, "maxLength": 120}
+      },
+      "additionalProperties": false
+    }
+  }
+}

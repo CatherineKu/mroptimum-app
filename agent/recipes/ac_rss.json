@@ -1,0 +1,15 @@
+{
+  "profile_id": "ac_rss",
+  "method": "ac",
+  "reconstructor": "rss",
+  "required_roles": ["signal", "noise"],
+  "validation": {
+    "matching_coil_count": true,
+    "signal_orientation_metadata": "warning"
+  },
+  "output": {
+    "coilsensitivity": false,
+    "gfactor": false,
+    "matlab": true
+  }
+}

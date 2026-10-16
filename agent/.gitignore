@@ -1,0 +1,7 @@
+# Runtime-only registry: may contain protected object references and must not be committed.
+data/datasets.json
+
+# Local development state
+.venv/
+__pycache__/
+.pytest_cache/

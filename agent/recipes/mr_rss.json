@@ -1,0 +1,15 @@
+{
+  "profile_id": "mr_rss",
+  "method": "mr",
+  "reconstructor": "rss",
+  "required_roles": ["signal"],
+  "validation": {
+    "minimum_replica_count": 2,
+    "signal_orientation_metadata": "warning"
+  },
+  "output": {
+    "coilsensitivity": false,
+    "gfactor": false,
+    "matlab": true
+  }
+}

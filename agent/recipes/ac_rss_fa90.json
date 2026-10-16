@@ -1,0 +1,20 @@
+{
+  "profile_id": "ac_rss_fa90",
+  "method": "ac",
+  "reconstructor": "rss",
+  "required_roles": ["signal", "noise", "flip_angle"],
+  "validation": {
+    "matching_coil_count": true,
+    "flip_angle_units": "degrees",
+    "signal_orientation_metadata": "warning"
+  },
+  "fa_normalization": {
+    "formula": "snr_over_sin_fa",
+    "interpolation": "bspline"
+  },
+  "output": {
+    "coilsensitivity": false,
+    "gfactor": false,
+    "matlab": true
+  }
+}

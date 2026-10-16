@@ -1,0 +1,65 @@
+{
+  "datasets": [
+    {
+      "dataset_id": "signal-example",
+      "display_name": "Example Siemens signal acquisition",
+      "role": "signal",
+      "format": "dat",
+      "vendor": "Siemens",
+      "metadata": {
+        "coil_count": 32,
+        "replica_count": 1,
+        "has_orientation": true
+      },
+      "brain_file": {
+        "type": "s3",
+        "filename": "replace-at-registration.dat",
+        "bucket": "REPLACE_AT_DEPLOYMENT",
+        "key": "REPLACE_AT_DEPLOYMENT",
+        "vendor": "Siemens",
+        "multiraid": false,
+        "options": {}
+      }
+    },
+    {
+      "dataset_id": "noise-example",
+      "display_name": "Example Siemens noise acquisition",
+      "role": "noise",
+      "format": "dat",
+      "vendor": "Siemens",
+      "metadata": {
+        "coil_count": 32,
+        "has_orientation": true
+      },
+      "brain_file": {
+        "type": "s3",
+        "filename": "replace-at-registration.dat",
+        "bucket": "REPLACE_AT_DEPLOYMENT",
+        "key": "REPLACE_AT_DEPLOYMENT",
+        "vendor": "Siemens",
+        "multiraid": false,
+        "options": {}
+      }
+    },
+    {
+      "dataset_id": "fa-example",
+      "display_name": "Example flip-angle map",
+      "role": "flip_angle",
+      "format": "nii.gz",
+      "vendor": "derived",
+      "metadata": {
+        "fa_units": "degrees",
+        "has_orientation": true
+      },
+      "brain_file": {
+        "type": "s3",
+        "filename": "replace-at-registration.nii.gz",
+        "bucket": "REPLACE_AT_DEPLOYMENT",
+        "key": "REPLACE_AT_DEPLOYMENT",
+        "vendor": "derived",
+        "multiraid": false,
+        "options": {}
+      }
+    }
+  ]
+}
