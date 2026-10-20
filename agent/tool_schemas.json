@@ -6,11 +6,30 @@
       "input_schema": {"type": "object", "properties": {}, "additionalProperties": false}
     },
     {
-      "name": "list_mro_datasets",
-      "description": "List registered datasets without exposing object-storage locations.",
+      "name": "list_mro_files",
+      "description": "List CloudMR-authorized MR Optimum files without exposing object-storage locations.",
+      "input_schema": {"type": "object", "properties": {}, "additionalProperties": false}
+    },
+    {
+      "name": "select_mro_files",
+      "description": "Verify that selected signal and noise CloudMR file IDs are currently available to the shared agent. Does not submit a job.",
       "input_schema": {
         "type": "object",
-        "properties": {"role": {"type": "string", "enum": ["signal", "noise", "flip_angle"]}},
+        "required": ["signal_file_id", "noise_file_id"],
+        "properties": {
+          "signal_file_id": {"type": "string", "minLength": 1},
+          "noise_file_id": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "submit_brain_multislice_demo_ac_rss",
+      "description": "Queue one real Mode 2 AC/RSS test using the curated BrainMultiSlice signal/noise demo pair. Requires explicit confirmation.",
+      "input_schema": {
+        "type": "object",
+        "required": ["confirm"],
+        "properties": {"confirm": {"type": "boolean", "const": true}},
         "additionalProperties": false
       }
     },
@@ -55,6 +74,18 @@
       }
     },
     {
+      "name": "get_mro_run_logs",
+      "description": "Retrieve a bounded, sanitized CloudWatch worker-log excerpt for one CloudMR pipeline. Read-only; does not submit, alter, or delete anything.",
+      "input_schema": {
+        "type": "object",
+        "required": ["pipeline_id"],
+        "properties": {
+          "pipeline_id": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "get_mro_result_manifest",
       "description": "Check whether an authorized completed run has outputs without exposing raw result URLs.",
       "input_schema": {
@@ -68,12 +99,12 @@
   "definitions": {
     "plan_arguments": {
       "type": "object",
-      "required": ["profile_id", "signal_dataset_id"],
+      "required": ["profile_id", "signal_file_id"],
       "properties": {
         "profile_id": {"type": "string", "enum": ["ac_rss", "ac_rss_fa90", "mr_rss"]},
-        "signal_dataset_id": {"type": "string", "minLength": 1},
-        "noise_dataset_id": {"type": "string", "minLength": 1},
-        "flip_angle_dataset_id": {"type": "string", "minLength": 1},
+        "signal_file_id": {"type": "string", "minLength": 1},
+        "noise_file_id": {"type": "string", "minLength": 1},
+        "flip_angle_file_id": {"type": "string", "minLength": 1},
         "alias": {"type": "string", "minLength": 1, "maxLength": 120}
       },
       "additionalProperties": false

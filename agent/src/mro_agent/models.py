@@ -1,6 +1,6 @@
 """Typed models used at the agent boundary.
 
-These models intentionally expose dataset IDs rather than bucket/key pairs.
+These models expose CloudMR Brain file IDs rather than S3 bucket/key pairs.
 """
 
 from __future__ import annotations
@@ -10,17 +10,23 @@ from enum import Enum
 from typing import Any
 
 
-class DatasetRole(str, Enum):
+class FileRole(str, Enum):
     SIGNAL = "signal"
     NOISE = "noise"
     FLIP_ANGLE = "flip_angle"
 
 
 @dataclass(frozen=True)
-class DatasetRecord:
-    dataset_id: str
+class CloudMRFile:
+    """A validated file record resolved from the CloudMR Brain catalogue.
+
+    ``brain_file`` is trusted adapter-only state used to build a compute task.
+    It must never be returned to the LLM or client UI.
+    """
+
+    file_id: str
     display_name: str
-    role: DatasetRole
+    role: FileRole
     format: str
     vendor: str
     metadata: dict[str, Any]
@@ -38,7 +44,7 @@ class DatasetRecord:
             "has_sensitivity_map",
         }
         return {
-            "dataset_id": self.dataset_id,
+            "file_id": self.file_id,
             "display_name": self.display_name,
             "role": self.role.value,
             "format": self.format,
@@ -83,9 +89,9 @@ class ExperimentProfile:
 class PlannedRun:
     plan_id: str
     profile: ExperimentProfile
-    signal: DatasetRecord
-    noise: DatasetRecord | None = None
-    flip_angle: DatasetRecord | None = None
+    signal: CloudMRFile
+    noise: CloudMRFile | None = None
+    flip_angle: CloudMRFile | None = None
     alias: str | None = None
     warnings: list[str] = field(default_factory=list)
 
@@ -94,9 +100,9 @@ class PlannedRun:
             "plan_id": self.plan_id,
             "profile": self.profile.public_summary(),
             "inputs": {
-                "signal_dataset_id": self.signal.dataset_id,
-                "noise_dataset_id": self.noise.dataset_id if self.noise else None,
-                "flip_angle_dataset_id": self.flip_angle.dataset_id if self.flip_angle else None,
+                "signal_file_id": self.signal.file_id,
+                "noise_file_id": self.noise.file_id if self.noise else None,
+                "flip_angle_file_id": self.flip_angle.file_id if self.flip_angle else None,
             },
             "warnings": self.warnings,
             "requires_confirmation": True,

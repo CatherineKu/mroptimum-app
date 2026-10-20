@@ -29,6 +29,49 @@ class CloudMRBrainClient:
     def submit(self, payload: dict) -> dict:
         return self._request("POST", "/api/pipeline/queue_job", json=payload)
 
+    def list_files(self, cloudapp_name: str) -> list[dict]:
+        """List files visible to this authenticated Brain identity.
+
+        This deliberately returns Brain's raw response only to the trusted tool
+        layer. ``MROToolService`` is responsible for allowlisting fields before
+        anything reaches an LLM or chat client.
+        """
+        response = self._request(
+            "GET",
+            "/api/data",
+            params={"cloudapp_name": cloudapp_name},
+        )
+        if isinstance(response, list):
+            return response
+        # Tolerate either of the response wrappers used by older Brain clients.
+        if isinstance(response, dict):
+            for key in ("data", "items", "files"):
+                if isinstance(response.get(key), list):
+                    return response[key]
+        raise BrainAPIError("CloudMR Brain returned an invalid file-list response")
+
+    def list_computing_units(self, app_name: str, mode: str) -> list[dict]:
+        """Return the authenticated user's currently visible computing units.
+
+        The trusted tool layer uses this immediately before a Mode 2
+        submission, rather than allowing Brain to auto-select an obsolete
+        registration from a mode-only request.
+        """
+        response = self._request(
+            "GET",
+            "/api/computing-unit/list",
+            params={"app_name": app_name, "mode": mode},
+        )
+        if not isinstance(response, dict):
+            raise BrainAPIError("CloudMR Brain returned an invalid computing-unit response")
+
+        units = response.get("computingUnits")
+        if not isinstance(units, list):
+            units = response.get(mode, [])
+        if not isinstance(units, list):
+            raise BrainAPIError("CloudMR Brain returned an invalid computing-unit list")
+        return [unit for unit in units if isinstance(unit, dict) and unit.get("mode") == mode]
+
     def get_pipeline(self, pipeline_id: str) -> dict:
         response = self._request("GET", f"/api/pipeline/{pipeline_id}")
         # The current Brain API returns [true, details] for this endpoint.

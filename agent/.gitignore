@@ -1,7 +1,12 @@
-# Runtime-only registry: may contain protected object references and must not be committed.
-data/datasets.json
+# Raw MRI acquisitions and their derived inventory artifacts are protected data.
+data/raw/
+data/inventory/
+
+# Local shared-agent credentials. Never commit this file.
+.env
 
 # Local development state
 .venv/
 __pycache__/
 .pytest_cache/
+.env

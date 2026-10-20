@@ -10,7 +10,7 @@ will connect them to Amazon Bedrock AgentCore.
 Bedrock AgentCore Runtime (mro-agent)
     -> AgentCore Gateway
         -> Lambda (MR Optimum tool adapter)
-            -> AWS Secrets Manager (CloudMR service credentials)
+            -> caller's authenticated CloudMR/Cognito context
             -> CloudMR Brain shared endpoint
 
 EventBridge / Step Functions
@@ -21,12 +21,19 @@ DynamoDB
     -> plans, approvals, pipeline IDs, and audit state
 ```
 
+The tool Lambda does not own an input bucket. New data uploads go directly to
+CloudMR Brain's existing upload endpoints and Brain-managed S3 storage; Brain
+also creates worker-only download URLs at job submission. If inventory runs in
+AWS, package `dat_inventory.py` and its `mrotools`/`twixtools` dependencies in
+an inventory-capable image. It must use a Brain-authorized temporary download,
+not a developer's external-disk path.
+
 ## IAM split
 
 | Principal | Required capability |
 | --- | --- |
 | AgentCore Runtime role | Invoke its Gateway only |
-| Gateway/tool Lambda role | Read its single CloudMR credential secret; call the HTTPS Brain endpoint; read/write its DynamoDB table |
+| Gateway/tool Lambda role | Call the HTTPS Brain endpoint with delegated caller identity; read/write its DynamoDB table |
 | Monitoring workflow role | Read the same pipeline state and update the run table |
 
 Do not grant the runtime role worker API-key access, unrestricted Secrets

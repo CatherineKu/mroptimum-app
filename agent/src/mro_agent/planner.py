@@ -3,12 +3,23 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Protocol
 from uuid import uuid4
 
 from .catalogue import PROFILES
-from .dataset_registry import DatasetRegistry
 from .errors import NotFoundError, ValidationError
-from .models import DatasetRole, PlannedRun
+from .models import CloudMRFile, FileRole, PlannedRun
+
+
+class CloudMRFileResolver(Protocol):
+    """Trusted bridge from a CloudMR file ID to validated file metadata.
+
+    The production implementation must query CloudMR Brain using the calling
+    user's identity and enforce ownership/demo-data access before returning a
+    record. It intentionally has no local JSON or S3 implementation.
+    """
+
+    def get(self, file_id: str, expected_role: FileRole | None = None) -> CloudMRFile: ...
 
 
 class InMemoryPlanStore:
@@ -34,22 +45,22 @@ class InMemoryPlanStore:
 
 
 class ExperimentPlanner:
-    def __init__(self, registry: DatasetRegistry, plans: InMemoryPlanStore):
-        self.registry = registry
+    def __init__(self, files: CloudMRFileResolver, plans: InMemoryPlanStore):
+        self.files = files
         self.plans = plans
 
     def preflight(
         self,
         profile_id: str,
-        signal_dataset_id: str,
-        noise_dataset_id: str | None = None,
-        flip_angle_dataset_id: str | None = None,
+        signal_file_id: str,
+        noise_file_id: str | None = None,
+        flip_angle_file_id: str | None = None,
     ) -> dict:
         plan = self._build_plan(
             profile_id,
-            signal_dataset_id,
-            noise_dataset_id,
-            flip_angle_dataset_id,
+            signal_file_id,
+            noise_file_id,
+            flip_angle_file_id,
             persist=False,
         )
         return {
@@ -62,16 +73,16 @@ class ExperimentPlanner:
     def create_plan(
         self,
         profile_id: str,
-        signal_dataset_id: str,
-        noise_dataset_id: str | None = None,
-        flip_angle_dataset_id: str | None = None,
+        signal_file_id: str,
+        noise_file_id: str | None = None,
+        flip_angle_file_id: str | None = None,
         alias: str | None = None,
     ) -> PlannedRun:
         plan = self._build_plan(
             profile_id,
-            signal_dataset_id,
-            noise_dataset_id,
-            flip_angle_dataset_id,
+            signal_file_id,
+            noise_file_id,
+            flip_angle_file_id,
             persist=True,
         )
         plan.alias = alias or self._default_alias(profile_id)
@@ -80,9 +91,9 @@ class ExperimentPlanner:
     def _build_plan(
         self,
         profile_id: str,
-        signal_dataset_id: str,
-        noise_dataset_id: str | None,
-        flip_angle_dataset_id: str | None,
+        signal_file_id: str,
+        noise_file_id: str | None,
+        flip_angle_file_id: str | None,
         persist: bool,
     ) -> PlannedRun:
         try:
@@ -90,15 +101,15 @@ class ExperimentPlanner:
         except KeyError as exc:
             raise ValidationError(f"Unknown MR Optimum profile '{profile_id}'") from exc
 
-        signal = self.registry.get(signal_dataset_id, DatasetRole.SIGNAL)
-        noise = self._optional_dataset(noise_dataset_id, DatasetRole.NOISE)
-        flip_angle = self._optional_dataset(flip_angle_dataset_id, DatasetRole.FLIP_ANGLE)
+        signal = self.files.get(signal_file_id, FileRole.SIGNAL)
+        noise = self._optional_file(noise_file_id, FileRole.NOISE)
+        flip_angle = self._optional_file(flip_angle_file_id, FileRole.FLIP_ANGLE)
         warnings: list[str] = []
 
         if profile.requires_noise and noise is None:
-            raise ValidationError(f"Profile '{profile_id}' requires a noise dataset")
+            raise ValidationError(f"Profile '{profile_id}' requires a noise file")
         if not profile.requires_noise and noise is not None:
-            raise ValidationError(f"Profile '{profile_id}' does not accept a noise dataset")
+            raise ValidationError(f"Profile '{profile_id}' does not accept a noise file")
         if profile.requires_flip_angle and flip_angle is None:
             raise ValidationError(f"Profile '{profile_id}' requires a flip-angle dataset")
         if not profile.requires_flip_angle and flip_angle is not None:
@@ -139,8 +150,8 @@ class ExperimentPlanner:
             self.plans.save(plan)
         return plan
 
-    def _optional_dataset(self, dataset_id: str | None, role: DatasetRole):
-        return self.registry.get(dataset_id, role) if dataset_id else None
+    def _optional_file(self, file_id: str | None, role: FileRole):
+        return self.files.get(file_id, role) if file_id else None
 
     @staticmethod
     def _default_alias(profile_id: str) -> str:

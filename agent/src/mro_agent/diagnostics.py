@@ -12,6 +12,11 @@ _ASSIGNMENT_SECRET = re.compile(
     r"\b(token|password|authorization|secret|signature)\s*[=:]\s*[^\s,;]+",
     re.I,
 )
+_STANDALONE_SECRET_LINE = re.compile(
+    r"(?im)^(\s*(?:token|password|authorization|secret|signature)\b).*$"
+)
+_SENSITIVE_LOCATION_LINE = re.compile(r"(?im)^\s*(?:bucket_name|file_key)\b.*$")
+_TEMP_PATH = re.compile(r"/tmp/[^\s\"']+")
 
 
 def redact(value: Any) -> Any:
@@ -29,6 +34,14 @@ def redact(value: Any) -> Any:
     return value
 
 
+def redact_log_message(message: str) -> str:
+    """Redact credentials and storage paths while retaining diagnostic text."""
+    message = _STANDALONE_SECRET_LINE.sub(r"\1 [REDACTED]", message)
+    message = _SENSITIVE_LOCATION_LINE.sub("[REDACTED_STORAGE_LOCATION]", message)
+    message = _TEMP_PATH.sub("[REDACTED_TEMP_PATH]", message)
+    return str(redact(message))
+
+
 def summarize_pipeline(pipeline: dict) -> dict:
     """Create an allowlisted status/diagnosis response for an LLM."""
     status = str(pipeline.get("status", "unknown")).lower()
@@ -43,6 +56,7 @@ def summarize_pipeline(pipeline: dict) -> dict:
         "pipeline_id": pipeline.get("pipeline") or pipeline.get("pipeline_id"),
         "job_id": pipeline.get("job_id"),
         "alias": pipeline.get("alias"),
+        "computing_unit_id": pipeline.get("computing_unit_id"),
         "status": status,
         "mode": pipeline.get("mode"),
         "updated_at": pipeline.get("updated_at"),

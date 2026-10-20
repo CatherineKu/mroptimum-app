@@ -38,7 +38,7 @@ def build_queue_payload(plan: PlannedRun) -> dict:
         reconstructor_options["flipAngle"] = _file(plan.flip_angle)
         files.append("flipAngle")
 
-    return {
+    payload = {
         "cloudapp_name": "MR Optimum",
         "mode": "mode_2",
         "alias": plan.alias,
@@ -62,11 +62,11 @@ def build_queue_payload(plan: PlannedRun) -> dict:
         },
         "output": deepcopy(plan.profile.output),
     }
+    return payload
 
 
-def _file(dataset) -> dict:
-    return {
-        "type": "file",
-        "id": dataset.dataset_id,
-        "options": deepcopy(dataset.brain_file),
-    }
+def _file(file_record) -> dict:
+    # Preserve the full file object from a known-good CloudMR task, including
+    # its numeric CloudMR file ID. Brain creates the worker-only presigned URL
+    # after submission; the agent must not create or persist one.
+    return deepcopy(file_record.brain_file)
