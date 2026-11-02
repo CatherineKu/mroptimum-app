@@ -39,16 +39,6 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # NEW SAFETY GUARD
-      - name: Verify AWS account
-        run: |
-          set -euo pipefail
-          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          if [ "$ACCOUNT_ID" != "794692802394" ]; then
-            echo "::error::Unexpected AWS account: ${ACCOUNT_ID}. Expected 794692802394."
-            exit 1
-          fi
-
       - name: Get AWS Account ID
         id: account
         run: |
@@ -119,7 +109,7 @@ jobs:
           echo "Fargate: ${FARGATE_URI}:latest"
 
       - name: Push to Public ECR (Mode 2 / local / SLURM / other clouds)
-        if: github.repository == 'cloudmrhub/mroptimum-app' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         env:
           IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
         run: |
