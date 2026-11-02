@@ -61,7 +61,7 @@ Resources:
       #   Command:
       #     - app.handler
       Timeout: 900
-      MemorySize: 4096
+      MemorySize: 3008
       EphemeralStorage:
         Size: 4096  
       # Grant this Lambda read/write access to all four buckets
